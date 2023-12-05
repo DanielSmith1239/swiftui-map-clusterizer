@@ -34,16 +34,12 @@ struct ContentView: View {
         
     var body: some View {
         
-        MapClusterizer(coordinateRegion: $coordinateRegion, clusterables: places) { clusters in
+        MapClusterizer(coordinateRegion: $coordinateRegion, clusterables: places) { (clusters, proxy) in
             Map(coordinateRegion: $coordinateRegion, annotationItems: clusters) { cluster in
                 MapAnnotation(coordinate: cluster.center) {
-                    ClusterView(cluster: cluster) {
+                    ClusterView(cluster: cluster) {                        
                         withAnimation {
-                            coordinateRegion.center = cluster.center
-                            coordinateRegion.span = .init(
-                                latitudeDelta: coordinateRegion.span.latitudeDelta/2,
-                                longitudeDelta: coordinateRegion.span.longitudeDelta/2
-                            )
+                            proxy.zoom(on: cluster)
                         }
                     }
                 }
