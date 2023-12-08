@@ -1,6 +1,8 @@
 import MapKit
 
 public protocol MapClusterable: Clusterable {
+    associatedtype ID: Hashable
+    var id: ID { get }
     var location: CLLocationCoordinate2D { get }
 }
 
@@ -19,7 +21,7 @@ extension Array where Element: MapClusterable {
     
     public func clusterize(distance: Double) -> [MapCluster<Element>] {
         return clusterize(distance: distance).enumerated().map { (id, values) in
-            MapCluster(id: id, values: values)
+            MapCluster(values: values)
         }
     }
     
@@ -28,7 +30,7 @@ extension Array where Element: MapClusterable {
         let maxSpan = CLLocation(latitude: region.center.latitude + region.span.latitudeDelta, longitude: region.center.longitude)
         let newMapSpanDistance = minSpan.distance(from: maxSpan)
         return clusterize(distance: newMapSpanDistance/factor).enumerated().map { (id, values) in
-            MapCluster(id: id, values: values)
+            MapCluster(values: values)
         }
     }
     

@@ -2,16 +2,28 @@ import MapKit
 
 public struct MapCluster<Value: MapClusterable> {
     
-    public let id: Int
+    public struct ID: Hashable {
+        let values: [Value.ID]
+    }
+    
+    public let id: ID
     public let values: [Value]
     public let center: CLLocationCoordinate2D
     public let radius: Double
     
-    init(id: Int, values: [Value]) {
-        self.id = id
+    init(values: [Value]) {
+        self.id = .init(values: values.map(\.id))
         self.values = values
         self.center = _center(of: values)
         self.radius = _radius(of: values)
+    }
+    
+}
+
+extension MapCluster: Equatable {
+    
+    public static func == (lhs: MapCluster<Value>, rhs: MapCluster<Value>) -> Bool {
+        lhs.values == rhs.values
     }
     
 }
