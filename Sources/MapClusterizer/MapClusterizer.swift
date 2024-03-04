@@ -10,36 +10,32 @@ public struct MapClusterizer<Content: View, Item>: View where Item: MapClusterab
     var content: ([MapCluster<Item>], Proxy) -> Content
     
     @Binding var position: MapCameraPosition
-    
+    @Binding var region: MKCoordinateRegion
+
     @State private var clusters: [MapCluster<Item>] = []
     
     @State private var mapSpanLatitudeDeltaDidChange = PassthroughSubject<CLLocationDegrees, Never>()
     
-    public init(position: Binding<MapCameraPosition>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
+    public init(position: Binding<MapCameraPosition>, region: Binding<MKCoordinateRegion>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
         self._position = position
         self.clusterables = clusterables
         self.content = content
+        self._region = region
     }
    
     public var body: some View {
         content(clusters, Proxy(position: $position))
-            .onChange(of: position) { newValue in
-                if let region = newValue.region {
-                    mapSpanLatitudeDeltaDidChange.send(region.span.latitudeDelta)
-                }
+            .onChange(of: region.span.latitudeDelta) { newValue in
+                mapSpanLatitudeDeltaDidChange.send(region.span.latitudeDelta)
             }
             .onReceive(mapSpanLatitudeDeltaDidChange.debounce(for: 0.1, scheduler: RunLoop.main)) { newValue in
-                if let region = position.region {
-                    let updatedClusters = clusterables.clusterize(region: region)
-                    if updatedClusters.count != clusters.count {
-                        clusters = updatedClusters
-                    }
+                let updatedClusters = clusterables.clusterize(region: region)
+                if updatedClusters.count != clusters.count {
+                    clusters = updatedClusters
                 }
             }
             .onAppear {
-                if let region = position.region {
-                    clusters = clusterables.clusterize(region: region)
-                }
+                clusters = clusterables.clusterize(region: region)
             }
     }
     
@@ -54,7 +50,6 @@ extension MapClusterizer {
         @Binding var position: MapCameraPosition
         
         public func zoom(on cluster: MapCluster<Item>, factor: Double = 3) {
-            
             var distance: Double = 0
             
             cluster.values.forEach { place in
@@ -63,6 +58,7 @@ extension MapClusterizer {
                     distance = max(distance, place.distance(to: other))
                 }
             }
+            
             position = .region(MKCoordinateRegion(center: cluster.center, latitudinalMeters: distance * factor, longitudinalMeters: distance * factor))
         }
         

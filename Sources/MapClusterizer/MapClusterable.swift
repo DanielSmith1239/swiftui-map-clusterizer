@@ -18,7 +18,6 @@ extension MapClusterable {
 }
 
 extension Array where Element: MapClusterable {
-    
     public func clusterize(distance: Double) -> [MapCluster<Element>] {
         return clusterize(distance: distance).enumerated().map { (id, values) in
             MapCluster(values: values)
