@@ -2,47 +2,56 @@ import SwiftUI
 import MapKit
 import Combine
 
+@available(iOS 17.0, *)
 public struct MapClusterizer<Content: View, Item>: View where Item: MapClusterable {
     
     let clusterables: [Item]
     
     var content: ([MapCluster<Item>], Proxy) -> Content
     
-    @Binding var coordinateRegion: MKCoordinateRegion
+    @Binding var position: MapCameraPosition
     
     @State private var clusters: [MapCluster<Item>] = []
     
     @State private var mapSpanLatitudeDeltaDidChange = PassthroughSubject<CLLocationDegrees, Never>()
     
-    public init(coordinateRegion: Binding<MKCoordinateRegion>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
-        self._coordinateRegion = coordinateRegion
+    public init(coordinateRegion: Binding<MapCameraPosition>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
+        self._position = coordinateRegion
         self.clusterables = clusterables
         self.content = content
     }
    
     public var body: some View {
-        content(clusters, Proxy(coordinateRegion: $coordinateRegion))
-            .onChange(of: coordinateRegion.span.latitudeDelta) { newValue in
-                mapSpanLatitudeDeltaDidChange.send(newValue)
+        content(clusters, Proxy(position: $position))
+            .onChange(of: position) { newValue in
+                if let region = newValue.region {
+                    mapSpanLatitudeDeltaDidChange.send(region.span.latitudeDelta)
+                }
             }
             .onReceive(mapSpanLatitudeDeltaDidChange.debounce(for: 0.1, scheduler: RunLoop.main)) { newValue in
-                let updatedClusters = clusterables.clusterize(region: coordinateRegion)
-                if updatedClusters.count != clusters.count {
-                    clusters = updatedClusters
+                if let region = position.region {
+                    let updatedClusters = clusterables.clusterize(region: region)
+                    if updatedClusters.count != clusters.count {
+                        clusters = updatedClusters
+                    }
                 }
             }
             .onAppear {
-                clusters = clusterables.clusterize(region: coordinateRegion)
+                if let region = position.region {
+                    clusters = clusterables.clusterize(region: region)
+                }
             }
     }
     
 }
 
+@available(iOS 17.0, *)
 extension MapClusterizer {
     
+    @available(iOS 17.0, *)
     public struct Proxy {
         
-        @Binding var coordinateRegion: MKCoordinateRegion
+        @Binding var position: MapCameraPosition
         
         public func zoom(on cluster: MapCluster<Item>, factor: Double = 3) {
             
@@ -54,9 +63,7 @@ extension MapClusterizer {
                     distance = max(distance, place.distance(to: other))
                 }
             }
-            
-            coordinateRegion = MKCoordinateRegion(center: cluster.center, latitudinalMeters: distance * factor, longitudinalMeters: distance * factor)
-            
+            position = .region(MKCoordinateRegion(center: cluster.center, latitudinalMeters: distance * factor, longitudinalMeters: distance * factor))
         }
         
     }
