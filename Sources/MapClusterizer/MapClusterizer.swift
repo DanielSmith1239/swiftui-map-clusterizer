@@ -15,8 +15,8 @@ public struct MapClusterizer<Content: View, Item>: View where Item: MapClusterab
     
     @State private var mapSpanLatitudeDeltaDidChange = PassthroughSubject<CLLocationDegrees, Never>()
     
-    public init(coordinateRegion: Binding<MapCameraPosition>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
-        self._position = coordinateRegion
+    public init(position: Binding<MapCameraPosition>, clusterables: [Item], content: @escaping ([MapCluster<Item>], Proxy) -> Content) {
+        self._position = position
         self.clusterables = clusterables
         self.content = content
     }
