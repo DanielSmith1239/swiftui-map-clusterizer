@@ -24,7 +24,7 @@ extension Array where Element: MapClusterable {
         }
     }
     
-    public func clusterize(region: MKCoordinateRegion, factor: Double = 200) -> [MapCluster<Element>] {
+    public func clusterize(region: MKCoordinateRegion, factor: Double = 100) -> [MapCluster<Element>] {
         let minSpan = CLLocation(latitude: region.center.latitude - region.span.latitudeDelta, longitude: region.center.longitude)
         let maxSpan = CLLocation(latitude: region.center.latitude + region.span.latitudeDelta, longitude: region.center.longitude)
         let newMapSpanDistance = minSpan.distance(from: maxSpan)
